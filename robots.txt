@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://smoo-sa.github.io/geoshield-landing/sitemap.xml

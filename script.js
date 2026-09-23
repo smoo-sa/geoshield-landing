@@ -173,6 +173,54 @@ document.querySelectorAll('.video-grid').forEach(grid => {
   grid.addEventListener('pointercancel', endDrag);
 });
 
+// ===== Google Maps review screenshots =====
+// Drop portrait screenshots into assets/reviews/ named review-1.png, review-2.png, ...
+// Only images that exist AND are portrait (taller than wide) are shown.
+const REVIEW_IMAGES = [
+  'assets/reviews/review-1.png',
+  'assets/reviews/review-2.png',
+  'assets/reviews/review-3.png',
+  'assets/reviews/review-4.png',
+  'assets/reviews/review-5.png',
+  'assets/reviews/review-6.png',
+  'assets/reviews/review-7.png',
+  'assets/reviews/review-8.png',
+  'assets/reviews/review-9.png',
+  'assets/reviews/review-10.png',
+];
+const reviewsGallery = document.getElementById('reviewsGallery');
+if (reviewsGallery) {
+  const lightbox = document.createElement('div');
+  lightbox.className = 'lightbox';
+  lightbox.innerHTML = '<button class="lightbox-close" aria-label="إغلاق">×</button><img alt="تقييم عميل على قوقل ماب">';
+  document.body.appendChild(lightbox);
+  const lbImg = lightbox.querySelector('img');
+  const closeLb = () => { lightbox.classList.remove('open'); document.body.classList.remove('lb-lock'); };
+  lightbox.addEventListener('click', closeLb);
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeLb(); });
+
+  REVIEW_IMAGES.forEach(src => {
+    const card = document.createElement('div');
+    card.className = 'review-shot';
+    card.style.display = 'none';
+    const img = new Image();
+    img.alt = 'تقييم عميل على قوقل ماب';
+    img.onload = () => {
+      if (img.naturalHeight > img.naturalWidth) card.style.display = '';
+      else card.remove();
+    };
+    img.onerror = () => card.remove();
+    img.src = src;
+    card.addEventListener('click', () => {
+      lbImg.src = src;
+      lightbox.classList.add('open');
+      document.body.classList.add('lb-lock');
+    });
+    card.appendChild(img);
+    reviewsGallery.appendChild(card);
+  });
+}
+
 // Tab switching
 const activateVideoTab = name => {
   document.querySelectorAll('.video-tab').forEach(t => t.classList.toggle('active', t.dataset.tab === name));
@@ -184,3 +232,41 @@ document.querySelectorAll('.video-tab').forEach(tab => {
 if (location.hash === '#tiktok' || location.hash === '#instagram') {
   activateVideoTab(location.hash.slice(1));
 }
+
+// ===== Stats counters =====
+const counterObserver = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if (!e.isIntersecting) return;
+    const el = e.target;
+    const target = parseFloat(el.dataset.count);
+    const decimals = +(el.dataset.decimals || 0);
+    const suffix = el.dataset.suffix || '';
+    const t0 = performance.now();
+    const dur = 1600;
+    const tick = now => {
+      const p = Math.min((now - t0) / dur, 1);
+      el.textContent = (target * (1 - Math.pow(1 - p, 3))).toFixed(decimals) + suffix;
+      if (p < 1) requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+    counterObserver.unobserve(el);
+  });
+}, { threshold: .5 });
+document.querySelectorAll('.stat-num').forEach(el => counterObserver.observe(el));
+
+// ===== FAQ accordion =====
+document.querySelectorAll('.faq-q').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const item = btn.parentElement;
+    const wasOpen = item.classList.contains('open');
+    document.querySelectorAll('.faq-item.open').forEach(i => {
+      i.classList.remove('open');
+      i.querySelector('.faq-a').style.maxHeight = '0px';
+    });
+    if (!wasOpen) {
+      item.classList.add('open');
+      const a = item.querySelector('.faq-a');
+      a.style.maxHeight = a.scrollHeight + 'px';
+    }
+  });
+});
